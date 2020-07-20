@@ -97,8 +97,7 @@ func TestAccVirtualMachinePending(t *testing.T) {
 		CheckDestroy: testAccCheckVirtualMachineDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:             testAccVirtualMachinePending,
-				ExpectNonEmptyPlan: true,
+				Config: testAccVirtualMachinePending,
 				Check: resource.ComposeTestCheckFunc(
 					testAccSetDSdummy(),
 					resource.TestCheckResourceAttr("opennebula_virtual_machine.test", "name", "virtual_machine_pending"),
@@ -135,7 +134,7 @@ func testAccCheckVirtualMachineDestroy(s *terraform.State) error {
 		if vm != nil {
 			vmState, _, _ := vm.State()
 			if vmState != 6 {
-				return fmt.Errorf("Expected virtual machine %s to have been destroyed", rs.Primary.ID)
+				return fmt.Errorf("Expected virtual machine %s to have been destroyed. vmState: %v", rs.Primary.ID, vmState)
 			}
 		}
 	}

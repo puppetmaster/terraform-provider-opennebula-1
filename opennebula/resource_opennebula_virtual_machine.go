@@ -221,6 +221,9 @@ func resourceOpennebulaVirtualMachineCreate(d *schema.ResourceData, meta interfa
 		// Instantiate template without creating a persistent copy of the template
 		// Note that the new VM is not pending
 		vmID, err = tc.Instantiate(d.Get("name").(string), d.Get("pending").(bool), vmDef, false)
+		if err != nil {
+			return err
+		}
 	} else {
 		if _, ok := d.GetOk("cpu"); !ok {
 			return fmt.Errorf("cpu is mandatory as template_id is not used")
@@ -236,10 +239,9 @@ func resourceOpennebulaVirtualMachineCreate(d *schema.ResourceData, meta interfa
 
 		// Create VM not in pending state
 		vmID, err = controller.VMs().Create(vmDef, d.Get("pending").(bool))
-	}
-
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	d.SetId(fmt.Sprintf("%v", vmID))
@@ -500,6 +502,8 @@ func waitForVmState(d *schema.ResourceData, meta interface{}, state string) (int
 			vm, err = vmc.Info(false)
 			if err != nil {
 				if strings.Contains(err.Error(), "Error getting") {
+					// Do not return an error here as it is excpected if the VM is already in DONE state
+					// after its destruction
 					return vm, "notfound", nil
 				}
 				return vm, "", err
@@ -507,6 +511,8 @@ func waitForVmState(d *schema.ResourceData, meta interface{}, state string) (int
 			vmState, vmLcmState, err := vm.State()
 			if err != nil {
 				if strings.Contains(err.Error(), "Error getting") {
+					// Do not return an error here as it is excpected if the VM is already in DONE state
+					// after its destruction
 					return vm, "notfound", nil
 				}
 				return vm, "", err
